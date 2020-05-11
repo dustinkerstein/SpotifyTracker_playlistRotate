@@ -1,1 +1,41 @@
-<script src="Main.js"></script>
+<head>
+	<script src="Main.js"></script>
+	<style>
+		#loggedIn:not(.shown),
+		#notLoggedIn:not(.shown),
+		#expired:not(.shown) {
+			display: none;
+		}
+
+		#loading.hidden {
+			display: none;
+		}
+		*{
+			font-family: Roboto, Arial, Helvetica, sans-serif;
+		}
+	</style>
+</head>
+
+<body>
+	<p id='loading'>Laden...</p>
+	<div id="notLoggedIn">
+		<p>Welkom! <a id='newLogin'>Klik hier om je aan te melden via Spotify</a></p>
+	</div>
+	<div id="expired">
+		<p>De sessie is verlopen! <a id='expiredLogin'>Opnieuw inloggen</a></p>
+	</div>
+	<div id="loggedIn">
+		<p>Hoera! Je bent ingelogd!</p>
+		<button id='signout'>Uitloggen</button>
+		<br>
+		<p id="playerData"></p>
+		<p id="timer"></p>
+		<button id='pause'>Pauzeer</button><button id='play'>Speel</button>
+		<br>
+		<br><br>
+		<button id='load'>Laad je favorieten-lijst</button>
+		<ul id='tracks'></ul>
+		<br>
+		<ul id='artists'></ul>
+	</div>
+</body>
