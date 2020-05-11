@@ -1,7 +1,8 @@
 var access_token;
-var auth_url = "https://accounts.spotify.com/authorize?client_id=2f8e2442a3ec491cbdcfa556487e9de4&redirect_uri=http%3A%2F%2Fstannl.github.io%2FSpotifyTracker%2Fcallback.html&scope=user-read-private%20user-read-email%20user-top-read&response_type=token";
+var auth_url = "https://accounts.spotify.com/authorize?client_id=2f8e2442a3ec491cbdcfa556487e9de4&redirect_uri=https%3A%2F%2Fstannl.github.io%2FSpotifyTracker%2Fcallback.html&scope=user-read-private%20user-read-email%20user-top-read&response_type=token";
 
 onload = function () {
+	document.write("<style>*{font-family: Roboto, Arial;}</style>");
 	if (!('localStorage' in window)) {
 		document.write("Sorry, de pagina is nu alleen gemaakt voor moderne browsers (Chrome, bij voorkeur).");
 	} else {
@@ -21,7 +22,7 @@ onload = function () {
 function main(){
 	access_token = localStorage.getItem("access_token");
 
-	document.write("<style>*{font-family: Roboto, Arial;}</style>Je bent ingelogd! <button id='signout'>Uitloggen</button><br><br><button id='load'>Gegevens downloaden</button><br><ul id='tracks'></ul><br><ul id='artists'></ul>");
+	document.write("Je bent ingelogd! <button id='signout'>Uitloggen</button><br><br><button id='load'>Gegevens downloaden</button><br><ul id='tracks'></ul><br><ul id='artists'></ul>");
 	document.getElementById('signout').addEventListener('click', signOut);
 	document.getElementById('load').addEventListener('click', loadData);
 }
