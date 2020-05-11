@@ -4,17 +4,17 @@ var auth_url = "https://accounts.spotify.com/authorize?client_id=2f8e2442a3ec491
 onload = function () {
 	document.write("<style>*{font-family: Roboto, Arial;}</style>");
 	if (!('localStorage' in window)) {
-		document.write("Sorry, de pagina is nu alleen gemaakt voor moderne browsers (Chrome, bij voorkeur).");
+		document.write("<p>Sorry, de pagina is nu alleen gemaakt voor moderne browsers (Chrome, bij voorkeur).</p>");
 	} else {
 		let expiration = localStorage.getItem("token_expiration");
 		if (expiration) {
 			if (+new Date(expiration) < +new Date()) {
-				document.write("De sessie is verlopen! <a href='" + auth_url + "'>Inloggen</a>");
+				document.write("<p>De sessie is verlopen! <a href='" + auth_url + "'>Opnieuw inloggen</a></p>");
 			} else {
 				main();
 			}
 		} else {
-			document.write('Welkom! <a href="' + auth_url + '">Klik hier om je aan te melden via Spotify</a>');
+			document.write('<p>Welkom! <a href="' + auth_url + '">Klik hier om je aan te melden via Spotify</a></p>');
 		}
 	}
 }
@@ -22,7 +22,7 @@ onload = function () {
 function main(){
 	access_token = localStorage.getItem("access_token");
 
-	document.write("Je bent ingelogd! <button id='signout'>Uitloggen</button><br><br><button id='load'>Gegevens downloaden</button><br><ul id='tracks'></ul><br><ul id='artists'></ul>");
+	document.write("<p>Hoera! Je bent ingelogd!</p> <button id='signout'>Uitloggen</button><br><br><button id='load'>Gegevens downloaden</button><br><ul id='tracks'></ul><br><ul id='artists'></ul>");
 	document.getElementById('signout').addEventListener('click', signOut);
 	document.getElementById('load').addEventListener('click', loadData);
 }
@@ -38,7 +38,7 @@ function loadData(){
 				alert("Er ging iets mis!");
 			}else{
 				let items = result.items;
-				let html = '<h1>Beste nummers</h1>';
+				let html = '<h1>Meest geluisterde nummers</h1>';
 				for (let i = 0; i < items.length; i++) {
 					const el = items[i];
 					html += '<li>' + el.artists[0].name + " - " + el.name + '</li>'
@@ -62,7 +62,7 @@ function loadData(){
 				alert("Er ging iets mis!");
 			}else{
 				let items = result.items;
-				let html = '<h1>Beste artiesten</h1>';
+				let html = '<h1>Meest geluisterde artiesten</h1>';
 				for (let i = 0; i < items.length; i++) {
 					const el = items[i];
 					html += '<li>' + el.name + '</li>'
