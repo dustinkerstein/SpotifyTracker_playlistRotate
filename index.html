@@ -1,4 +1,6 @@
 <head>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 	<script src="Main.js"></script>
 	<style>
 		#loggedIn:not(.shown),
@@ -10,7 +12,8 @@
 		#loading.hidden {
 			display: none;
 		}
-		*{
+
+		* {
 			font-family: Roboto, Arial, Helvetica, sans-serif;
 		}
 	</style>
@@ -25,17 +28,21 @@
 		<p>De sessie is verlopen! <a id='expiredLogin'>Opnieuw inloggen</a></p>
 	</div>
 	<div id="loggedIn">
-		<p>Hoera! Je bent ingelogd!</p>
+		<img src="header.jpeg" style='width: 80%; position: relative; left: 10%;' alt="Header image" id="header">
+		<p>Hoera! Je bent ingelogd<span id='user'></span>!</p>
 		<button id='signout'>Uitloggen</button>
 		<br>
 		<p id="playerData"></p>
 		<p id="timer"></p>
-		<button id='pause'>Pauzeer</button><button id='play'>Speel</button>
+		<button id='prev'>Vorige</button>
+		<button id='pauseplay'>Play</button>
+		<button id='next'>Volgende</button>
+		<button id='shuffle'>Zet shuffle aan/uit</button>
 		<br>
 		<br><br>
 		<button id='load'>Laad je favorieten-lijst</button>
-		<ul id='tracks'></ul>
+		<ol id='tracks'></ol>
 		<br>
-		<ul id='artists'></ul>
+		<ol id='artists'></ol>
 	</div>
 </body>

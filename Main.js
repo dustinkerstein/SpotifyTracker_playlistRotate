@@ -1,10 +1,7 @@
 var access_token;
-var player = {
-	currentSong: null,
-	playing: false,
-	timestamp: 0
-}
+var player = {};
 var isPaused = false;
+var playerUpdate;
 var auth_url = "https://accounts.spotify.com/authorize?client_id=2f8e2442a3ec491cbdcfa556487e9de4&redirect_uri=" + encodeURI(location.href.split(location.pathname)[0] + "/SpotifyTracker/callback.html") + "&scope=user-read-private%20user-read-email%20user-modify-playback-state%20user-read-playback-state%20user-top-read&response_type=token";
 
 onload = function () {
@@ -21,12 +18,26 @@ onload = function () {
 				document.getElementById("loggedIn").classList.add("shown");
 				document.getElementById('signout').addEventListener('click', signOut);
 				document.getElementById('load').addEventListener('click', loadData);
-				document.getElementById('pause').addEventListener('click', function () {
-					controlPlayback('pause');
+				document.getElementById('pauseplay').addEventListener('click', function () {
+					controlPlayback(player ? (player.is_playing ? 'pause' : 'play') : '');
 				});
-				document.getElementById('play').addEventListener('click', function () {
-					controlPlayback('play');
+				document.getElementById('next').addEventListener('click', function () {
+					controlPlayback('next', 'POST');
 				});
+				document.getElementById('prev').addEventListener('click', function () {
+					controlPlayback('previous', 'POST');
+				});
+				document.getElementById('shuffle').addEventListener('click', function () {
+					controlPlayback('shuffle', 'PUT', '?state=' + ("" + (!player.shuffle_state) || 'true'));
+				});
+
+				request("GET", 'me', function () {
+					if (this.readyState == XMLHttpRequest.DONE && this.status === 200) {
+						let res = JSON.parse(this.response);
+						document.getElementById("user").innerHTML = " als " + res.display_name + " (" + res.email + ")";
+					}
+				})
+
 
 				updatePlayer();
 				updateTimer();
@@ -98,8 +109,8 @@ function signOut() {
 }
 
 
-function controlPlayback(action) {
-	request('PUT', 'me/player/' + action, function () {
+function controlPlayback(action, method, params) {
+	request(method || 'PUT', 'me/player/' + action + (params || ""), function () {
 		if (this.readyState == XMLHttpRequest.DONE && this.status === 200) {
 			let result = JSON.parse(this.response);
 			updatePlayer()
@@ -118,22 +129,21 @@ function checkSignIn() {
 function updatePlayer() {
 	request("GET", "me/player", function () {
 		if (this.readyState == XMLHttpRequest.DONE) {
-			player.currentSong = null;
 			player.isPaused = false;
 			let playerEl = document.getElementById("playerData");
 			if (this.status === 200) {
 				if (!this.response) return;
 				let res = JSON.parse(this.response);
 				if (!res) return;
-				player.currentSong = res.item;
-				player.timestamp = res.timestamp;
-				player.playing = res.is_playing;
-				player.progress = res.progress_ms;
-				let html = "<b>Nu aan het afspelen:</b> " + player.currentSong.artists[0].name + " - " + player.currentSong.name;
-				if (!player.playing) {
-					html += ' (gepauzeerd)';
-				}
+				player = res;
+				playerUpdate = +new Date();
+
+				let html = "<b>Nu aan het afspelen" + (!player.is_playing ? " (gepauzeerd)" : "") + ":</b> ";
+				html += player.item.artists[0].name + " - " + player.item.name;
+
+				document.getElementById("pauseplay").innerHTML = player.is_playing ? "Pauzeer" : "Play";
 				playerEl.innerHTML = html;
+				document.getElementById("shuffle").innerHTML = 'Zet shuffle ' + (res['shuffle_state'] ? 'uit' : 'aan');
 				updateTimer();
 			} else {
 				playerEl.innerHTML = "<b>Momenteel niets aan het afspelen.</b>";
@@ -151,14 +161,14 @@ function updateTimer() {
 	let parseTime = function (t) {
 		return prependZero(Math.floor(t / 60000)) + ":" + prependZero(Math.floor(t / 1000) % 60);
 	}
-	if (player.currentSong) {
-		let progress = player['progress'];
-		let duration = player.currentSong['duration_ms'];
-		if (player.playing) {
-			let ts = player['timestamp'];
+	if (player.item) {
+		let progress = player['progress_ms'];
+		let duration = player.item['duration_ms'];
+		if (player.is_playing) {
+			let ts = playerUpdate;
 			let diff = +new Date() - ts;
-			progress = diff;
-			if(progress > duration){
+			progress += diff;
+			if (progress > duration) {
 				updatePlayer();
 			}
 		}
