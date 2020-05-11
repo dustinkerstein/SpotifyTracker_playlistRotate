@@ -7,7 +7,7 @@
 			if('localStorage' in window){
 				localStorage.setItem("token_expiration", "" + new Date(+new Date() + (+ei)*1000));
 				localStorage.setItem("access_token", at);
-				location = "../spotify"
+				location = "/"
 			}else{
 				erreur();
 			}
@@ -17,6 +17,6 @@
 	}
 
 	function erreur(){
-		document.write("Er is iets mis gegaan. <a href='../spotify'>Terug naar home</a>");
+		document.write("Er is iets mis gegaan. <a href='/'>Terug naar home</a>");
 	}
 </script>
