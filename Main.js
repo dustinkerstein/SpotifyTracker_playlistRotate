@@ -1,4 +1,5 @@
 var access_token;
+var auth_url = "https://accounts.spotify.com/authorize?client_id=2f8e2442a3ec491cbdcfa556487e9de4&redirect_uri=http%3A%2F%2Fstannl.github.io%2FSpotifyTracker%2Fcallback.html&scope=user-read-private%20user-read-email%20user-top-read&response_type=token";
 
 onload = function () {
 	if (!('localStorage' in window)) {
@@ -7,12 +8,12 @@ onload = function () {
 		let expiration = localStorage.getItem("token_expiration");
 		if (expiration) {
 			if (+new Date(expiration) < +new Date()) {
-				document.write("De sessie is verlopen! <a href='https://accounts.spotify.com/authorize?client_id=2f8e2442a3ec491cbdcfa556487e9de4&redirect_uri=http%3A%2F%2Flocalhost%2Fspotify%2Fcallback.html&scope=user-read-private%20user-read-email%20user-top-read&response_type=token'>Inloggen</a>");
+				document.write("De sessie is verlopen! <a href='" + auth_url + "'>Inloggen</a>");
 			} else {
 				main();
 			}
 		} else {
-			document.write('Welkom! <a href="https://accounts.spotify.com/authorize?client_id=2f8e2442a3ec491cbdcfa556487e9de4&redirect_uri=http%3A%2F%2Flocalhost%2Fspotify%2Fcallback.html&scope=user-read-private%20user-read-email%20user-top-read&response_type=token">Klik hier om je aan te melden via Spotify</a>');
+			document.write('Welkom! <a href="' + auth_url + '">Klik hier om je aan te melden via Spotify</a>');
 		}
 	}
 }
