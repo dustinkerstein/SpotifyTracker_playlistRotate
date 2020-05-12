@@ -1,6 +1,8 @@
 var access_token;
 var player = {};
 var isPaused = false;
+var hasAlerted = false;
+var searchQuery;
 var availableDevice;
 var playerUpdate;
 var auth_url = "https://accounts.spotify.com/authorize?client_id=2f8e2442a3ec491cbdcfa556487e9de4&redirect_uri=" + encodeURI(location.href.split(location.pathname)[0] + "/SpotifyTracker/callback.html") + "&scope=user-read-private%20user-read-email%20user-modify-playback-state%20user-read-playback-state%20user-top-read%20user-read-recently-played&response_type=token";
@@ -18,7 +20,7 @@ onload = function () {
 				access_token = localStorage.getItem("access_token");
 				document.getElementById("loggedIn").classList.add("shown");
 				document.getElementById('signout').addEventListener('click', signOut);
-				document.getElementById('load').addEventListener('click', loadData);
+				document.getElementById('loadFavourites').addEventListener('click', loadFavourites);
 				document.getElementById('lastPlayer').addEventListener('click', newPlayback);
 				document.getElementById('search').addEventListener('click', search);
 				document.getElementById('pauseplay').addEventListener('click', function () {
@@ -57,8 +59,11 @@ onload = function () {
 
 function request(method, path, callback) {
 	if (!checkSignIn()) {
-		alert("Er ging iets mis met de authorisatie!");
-		signOut();
+		if (!hasAlerted) {
+			hasAlerted = true;
+			alert("Er ging iets mis met de authorisatie!");
+			location.reload();
+		}
 		return;
 	}
 	let xml = new XMLHttpRequest();
@@ -68,38 +73,37 @@ function request(method, path, callback) {
 	xml.send();
 }
 
-function loadData() {
-	request('GET', 'me/top/tracks', function () {
+function loadFavourites() {
+	request('GET', 'me/top/artists?time_range=short_term', function () {
 		if (this.readyState == XMLHttpRequest.DONE && this.status === 200) {
 			result = JSON.parse(this.response);
 			if (!result || !('items' in result)) {
 				alert("Er ging iets mis!");
 			} else {
 				let items = result.items;
-				let html = '<h1>Meest geluisterde nummers</h1>';
+				let html = '<h1>Meest geluisterde artiesten (laatste 4 weken)</h1>';
+				for (let i = 0; i < items.length; i++) {
+					const el = items[i];
+					html += '<li>' + el.name + '</li>'
+				}
+				document.getElementById("artists").innerHTML = html;
+			}
+		}
+	});
+
+	request('GET', 'me/top/tracks?time_range=short_term', function () {
+		if (this.readyState == XMLHttpRequest.DONE && this.status === 200) {
+			result = JSON.parse(this.response);
+			if (!result || !('items' in result)) {
+				alert("Er ging iets mis!");
+			} else {
+				let items = result.items;
+				let html = '<h1>Meest geluisterde nummers (laatste 4 weken)</h1>';
 				for (let i = 0; i < items.length; i++) {
 					const el = items[i];
 					html += '<li>' + el.artists[0].name + " - " + el.name + '</li>'
 				}
 				document.getElementById("tracks").innerHTML = html;
-			}
-		}
-	});
-
-
-	request('GET', 'me/top/artists', function () {
-		if (this.readyState == XMLHttpRequest.DONE && this.status === 200) {
-			result = JSON.parse(this.response);
-			if (!result || !('items' in result)) {
-				alert("Er ging iets mis!");
-			} else {
-				let items = result.items;
-				let html = '<h1>Meest geluisterde artiesten</h1>';
-				for (let i = 0; i < items.length; i++) {
-					const el = items[i];
-					html += '<li>' + el.name + " - " + el.name + '</li>'
-				}
-				document.getElementById("artists").innerHTML = html;
 			}
 		}
 	});
@@ -222,41 +226,50 @@ function newPlayback() {
 }
 
 function search() {
-	request('GET', 'search?type=track,album,artist&market=nl&q=' + prompt("Zoekopdracht"), function () {
-		if (this.readyState == XMLHttpRequest.DONE && this.status === 200) {
-			let res = JSON.parse(this.response);
-			let albums = res.albums.items;
-			let artists = res.artists.items;
-			let tracks = res.tracks.items;
+	document.getElementById("searchResults").innerHTML = '';
+	setTimeout(function () {
+		searchQuery = '';
+		searchQuery = prompt("Zoekopdracht");
+		if(!searchQuery.length) return;
+		request('GET', 'search?type=track,album,artist&market=nl&q=' + searchQuery, function () {
+			if (this.readyState == XMLHttpRequest.DONE && this.status === 200) {
+				let res = JSON.parse(this.response);
+				let albums = res.albums.items;
+				let artists = res.artists.items;
+				let tracks = res.tracks.items;
 
-			let html = '';
+				let html = '<br><b>Gezocht op: </b>' + searchQuery + '<br><button id="clearSearch">Clear zoekopdracht</button><br><br><br>';
 
 
-			if (artists.length) {
-				html += '<b>Gevonden Artiesten</b><ul>';
-				for (let i = 0; i < artists.length; i++) {
-					html += '<li>'+artists[i].name+"</li>";
+				if (artists.length) {
+					html += '<b>Gevonden Artiesten</b><ul>';
+					for (let i = 0; i < artists.length && i < 3; i++) {
+						html += '<li>' + artists[i].name + "</li>";
+					}
+					html += '</ul>';
 				}
-				html += '</ul>';
-			}
 
-			if (tracks.length) {
-				html += '<b>Gevonden Nummers</b><ul>';
-				for (let i = 0; i < tracks.length; i++) {
-					html += '<li>' + tracks[i].artists[0].name + " - " + tracks[i].name + "</li>";
+				if (tracks.length) {
+					html += '<b>Gevonden Nummers</b><ul>';
+					for (let i = 0; i < tracks.length && i < 12; i++) {
+						html += '<li>' + tracks[i].artists[0].name + " - " + tracks[i].name + "</li>";
+					}
+					html += '</ul>';
 				}
-				html += '</ul>';
-			}
 
-			if (albums.length) {
-				html += '<b>Gevonden Albums</b><ul>';
-				for (let i = 0; i < albums.length; i++) {
-					html += '<li>' + albums[i].artists[0].name + " - " + albums[i].name + "</li>";
+				if (albums.length) {
+					html += '<b>Gevonden Albums</b><ul>';
+					for (let i = 0; i < albums.length && i < 3; i++) {
+						html += '<li>' + albums[i].artists[0].name + " - " + albums[i].name + "</li>";
+					}
+					html += '</ul>';
 				}
-				html += '</ul>';
-			}
 
-			document.getElementById("searchResults").innerHTML = html;
-		}
-	});
+				document.getElementById("searchResults").innerHTML = html;
+				document.getElementById("clearSearch").addEventListener("click", function(){
+					document.getElementById("searchResults").innerHTML = '';
+				});
+			}
+		});
+	}, 50);
 }
