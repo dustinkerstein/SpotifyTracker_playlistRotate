@@ -5,7 +5,8 @@
 	<style>
 		#loggedIn:not(.shown),
 		#notLoggedIn:not(.shown),
-		#expired:not(.shown) {
+		#expired:not(.shown),
+		#playback:not(.shown), #lastPlayer:not(.shown) {
 			display: none;
 		}
 
@@ -33,12 +34,17 @@
 		<button id='signout'>Uitloggen</button>
 		<br>
 		<p id="playerData"></p>
-		<p id="timer"></p>
-		<button id='prev'>Vorige</button>
-		<button id='pauseplay'>Play</button>
-		<button id='next'>Volgende</button>
-		<button id='shuffle'>Zet shuffle aan/uit</button>
+		<div id="playback">
+			<p id="timer"></p>
+			<button id='prev'>Vorige</button>
+			<button id='pauseplay'>Play</button>
+			<button id='next'>Volgende</button>
+			<button id='shuffle'>Zet shuffle aan/uit</button>
+		</div>
+		<button id='lastPlayer'>Doorgaan met afspelen</button><br>
+		<button id='search'>Zoeken</button>
 		<br>
+		<div id="searchResults"></div>
 		<br><br>
 		<button id='load'>Laad je favorieten-lijst</button>
 		<ol id='tracks'></ol>

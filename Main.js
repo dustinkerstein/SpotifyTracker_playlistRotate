@@ -1,8 +1,9 @@
 var access_token;
 var player = {};
 var isPaused = false;
+var availableDevice;
 var playerUpdate;
-var auth_url = "https://accounts.spotify.com/authorize?client_id=2f8e2442a3ec491cbdcfa556487e9de4&redirect_uri=" + encodeURI(location.href.split(location.pathname)[0] + "/SpotifyTracker/callback.html") + "&scope=user-read-private%20user-read-email%20user-modify-playback-state%20user-read-playback-state%20user-top-read&response_type=token";
+var auth_url = "https://accounts.spotify.com/authorize?client_id=2f8e2442a3ec491cbdcfa556487e9de4&redirect_uri=" + encodeURI(location.href.split(location.pathname)[0] + "/SpotifyTracker/callback.html") + "&scope=user-read-private%20user-read-email%20user-modify-playback-state%20user-read-playback-state%20user-top-read%20user-read-recently-played&response_type=token";
 
 onload = function () {
 	if (!('localStorage' in window)) {
@@ -18,6 +19,8 @@ onload = function () {
 				document.getElementById("loggedIn").classList.add("shown");
 				document.getElementById('signout').addEventListener('click', signOut);
 				document.getElementById('load').addEventListener('click', loadData);
+				document.getElementById('lastPlayer').addEventListener('click', newPlayback);
+				document.getElementById('search').addEventListener('click', search);
 				document.getElementById('pauseplay').addEventListener('click', function () {
 					controlPlayback(player ? (player.is_playing ? 'pause' : 'play') : '');
 				});
@@ -145,11 +148,30 @@ function updatePlayer() {
 				playerEl.innerHTML = html;
 				document.getElementById("shuffle").innerHTML = 'Zet shuffle ' + (res['shuffle_state'] ? 'uit' : 'aan');
 				updateTimer();
+				document.getElementById("playback").classList.add("shown");
+				document.getElementById("lastPlayer").classList.remove("shown");
 			} else {
 				playerEl.innerHTML = "<b>Momenteel niets aan het afspelen.</b>";
+				document.getElementById("playback").classList.remove("shown");
+				checkDevices();
 			}
 		}
 	})
+}
+
+function checkDevices() {
+	request("GET", "me/player/devices", function () {
+		if (this.readyState == XMLHttpRequest.DONE) {
+			availableDevice = null;
+			res = JSON.parse(this.response);
+			if (res.devices.length > 0) {
+				availableDevice = res.devices[0];
+				document.getElementById("lastPlayer").classList.add("shown");
+			} else {
+				document.getElementById("lastPlayer").classList.remove("shown");
+			}
+		}
+	});
 }
 
 
@@ -176,4 +198,65 @@ function updateTimer() {
 	} else {
 		timer.innerHTML = '-/-';
 	}
+}
+
+
+function newPlayback() {
+	if (!checkSignIn()) {
+		alert("Er ging iets mis met de authorisatie!");
+		signOut();
+		return;
+	}
+	let xml = new XMLHttpRequest();
+	xml.open('PUT', 'https://api.spotify.com/v1/me/player');
+	xml.onreadystatechange = function () {
+		if (this.readyState == XMLHttpRequest.DONE && this.status === 200) {
+			updatePlayer();
+		}
+	};
+	xml.setRequestHeader('Authorization', 'Bearer ' + access_token)
+	xml.send(JSON.stringify({
+		device_ids: [availableDevice.id],
+		play: true
+	}));
+}
+
+function search() {
+	request('GET', 'search?type=track,album,artist&market=nl&q=' + prompt("Zoekopdracht"), function () {
+		if (this.readyState == XMLHttpRequest.DONE && this.status === 200) {
+			let res = JSON.parse(this.response);
+			let albums = res.albums.items;
+			let artists = res.artists.items;
+			let tracks = res.tracks.items;
+
+			let html = '';
+
+
+			if (artists.length) {
+				html += '<b>Gevonden Artiesten</b><ul>';
+				for (let i = 0; i < artists.length; i++) {
+					html += '<li>'+artists[i].name+"</li>";
+				}
+				html += '</ul>';
+			}
+
+			if (tracks.length) {
+				html += '<b>Gevonden Nummers</b><ul>';
+				for (let i = 0; i < tracks.length; i++) {
+					html += '<li>' + tracks[i].artists[0].name + " - " + tracks[i].name + "</li>";
+				}
+				html += '</ul>';
+			}
+
+			if (albums.length) {
+				html += '<b>Gevonden Albums</b><ul>';
+				for (let i = 0; i < albums.length; i++) {
+					html += '<li>' + albums[i].artists[0].name + " - " + albums[i].name + "</li>";
+				}
+				html += '</ul>';
+			}
+
+			document.getElementById("searchResults").innerHTML = html;
+		}
+	});
 }
