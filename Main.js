@@ -57,7 +57,7 @@ onload = function () {
 	}
 }
 
-function request(method, path, callback) {
+function request(method, path, callback, data) {
 	if (!checkSignIn()) {
 		if (!hasAlerted) {
 			hasAlerted = true;
@@ -70,15 +70,23 @@ function request(method, path, callback) {
 	xml.open(method, 'https://api.spotify.com/v1/' + path);
 	xml.onreadystatechange = callback;
 	xml.setRequestHeader('Authorization', 'Bearer ' + access_token)
-	xml.send();
+	xml.send(data ? JSON.stringify(data) : undefined);
 }
 
 function loadFavourites() {
+	if (document.getElementById("loadFavourites").innerHTML != 'Laad je favorieten-lijst') {
+		document.getElementById("artists").innerHTML = '';
+		document.getElementById("tracks").innerHTML = '';
+		document.getElementById("loadFavourites").innerHTML = 'Laad je favorieten-lijst';
+		return;
+	}
 	request('GET', 'me/top/artists?time_range=short_term', function () {
 		if (this.readyState == XMLHttpRequest.DONE && this.status === 200) {
-			result = JSON.parse(this.response);
+			document.getElementById("artists").innerHTML = '';
+			document.getElementById("tracks").innerHTML = '';
+				result = JSON.parse(this.response);
 			if (!result || !('items' in result)) {
-				alert("Er ging iets mis!");
+				document.getElementById("artists").innerHTML = '<b>Er ging iets mis!</b>';
 			} else {
 				let items = result.items;
 				let html = '<h1>Meest geluisterde artiesten (laatste 4 weken)</h1>';
@@ -87,6 +95,7 @@ function loadFavourites() {
 					html += '<li>' + el.name + '</li>'
 				}
 				document.getElementById("artists").innerHTML = html;
+				document.getElementById("loadFavourites").innerHTML = 'Maak lijst met favorieten leeg';
 			}
 		}
 	});
@@ -116,13 +125,14 @@ function signOut() {
 }
 
 
-function controlPlayback(action, method, params) {
+function controlPlayback(action, method, params, data) {
+	console.log(action, method, params, data);
 	request(method || 'PUT', 'me/player/' + action + (params || ""), function () {
 		if (this.readyState == XMLHttpRequest.DONE && this.status === 200) {
 			let result = JSON.parse(this.response);
-			updatePlayer()
+			updatePlayer();
 		}
-	})
+	}, data || {})
 }
 
 function checkSignIn() {
@@ -206,23 +216,10 @@ function updateTimer() {
 
 
 function newPlayback() {
-	if (!checkSignIn()) {
-		alert("Er ging iets mis met de authorisatie!");
-		signOut();
-		return;
-	}
-	let xml = new XMLHttpRequest();
-	xml.open('PUT', 'https://api.spotify.com/v1/me/player');
-	xml.onreadystatechange = function () {
-		if (this.readyState == XMLHttpRequest.DONE && this.status === 200) {
-			updatePlayer();
-		}
-	};
-	xml.setRequestHeader('Authorization', 'Bearer ' + access_token)
-	xml.send(JSON.stringify({
+	controlPlayback('', "PUT", '', {
 		device_ids: [availableDevice.id],
 		play: true
-	}));
+	});
 }
 
 function search() {
@@ -230,7 +227,7 @@ function search() {
 	setTimeout(function () {
 		searchQuery = '';
 		searchQuery = prompt("Zoekopdracht");
-		if(!searchQuery.length) return;
+		if (!searchQuery || !searchQuery.length) return;
 		request('GET', 'search?type=track,album,artist&market=nl&q=' + searchQuery, function () {
 			if (this.readyState == XMLHttpRequest.DONE && this.status === 200) {
 				let res = JSON.parse(this.response);
@@ -244,7 +241,7 @@ function search() {
 				if (artists.length) {
 					html += '<b>Gevonden Artiesten</b><ul>';
 					for (let i = 0; i < artists.length && i < 3; i++) {
-						html += '<li>' + artists[i].name + "</li>";
+						html += '<li>' + artists[i].name + "&nbsp;&nbsp;&nbsp;<button class='playURI' URI=" + artists[i].uri + ">Afspelen</button></li>";
 					}
 					html += '</ul>';
 				}
@@ -252,7 +249,7 @@ function search() {
 				if (tracks.length) {
 					html += '<b>Gevonden Nummers</b><ul>';
 					for (let i = 0; i < tracks.length && i < 12; i++) {
-						html += '<li>' + tracks[i].artists[0].name + " - " + tracks[i].name + "</li>";
+						html += '<li>' + tracks[i].artists[0].name + " - " + tracks[i].name + "&nbsp;&nbsp;&nbsp;<button class='playURI' URI=" + tracks[i].uri + ">Afspelen</button></li>";
 					}
 					html += '</ul>';
 				}
@@ -260,15 +257,26 @@ function search() {
 				if (albums.length) {
 					html += '<b>Gevonden Albums</b><ul>';
 					for (let i = 0; i < albums.length && i < 3; i++) {
-						html += '<li>' + albums[i].artists[0].name + " - " + albums[i].name + "</li>";
+						html += '<li>' + albums[i].artists[0].name + " - " + albums[i].name + "&nbsp;&nbsp;&nbsp;<button class='playURI' URI=" + albums[i].uri + ">Afspelen</button></li>";
 					}
 					html += '</ul>';
 				}
 
 				document.getElementById("searchResults").innerHTML = html;
-				document.getElementById("clearSearch").addEventListener("click", function(){
+				document.getElementById("clearSearch").addEventListener("click", function () {
 					document.getElementById("searchResults").innerHTML = '';
 				});
+
+				let btns = document.getElementsByClassName("playURI");
+				for (let i = 0; i < btns.length; i++) {
+					const btn = btns[i];
+					btn.addEventListener('click', function () {
+						let uri = this.attributes.uri.value;
+
+						let data = uri.startsWith("spotify:track") ? { uris: [uri], } : { context_uri: uri, };
+						controlPlayback('play', "PUT", '', data);
+					})
+				}
 			}
 		});
 	}, 50);
