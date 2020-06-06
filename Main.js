@@ -126,7 +126,6 @@ function signOut() {
 
 
 function controlPlayback(action, method, params, data) {
-	console.log(action, method, params, data);
 	request(method || 'PUT', 'me/player/' + action + (params || ""), function () {
 		if (this.readyState == XMLHttpRequest.DONE && this.status === 200) {
 			let result = JSON.parse(this.response);
