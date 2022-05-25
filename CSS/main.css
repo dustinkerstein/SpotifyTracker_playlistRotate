@@ -1,8 +1,13 @@
 body {
 	background: #1ed760;
 	color: white;
-	padding: 24px;
 	font-size: 1.25rem;
+}
+
+body,
+html {
+	margin: 0;
+	padding: 0;
 }
 
 #loggedIn:not(.shown),
@@ -23,7 +28,35 @@ body {
 
 
 #header {
+	background: white;
+	padding: 18px;
+}
+
+#headerImg {
 	width: 80%;
-	position: relative;
-	left: 10%;
+	max-width: 600px;
+}
+
+.container {
+	padding: 24px;
+	margin: 16px 0;
+}
+
+.shaded-container {
+	background-color: rgba(0, 0, 0, .1);
+}
+
+button {
+	outline: none;
+	border: none;
+	background: rgba(0, 0, 0, .15);
+	color: white;
+	border-radius: 6px;
+	padding: 12px;
+	font-weight: bold;
+	letter-spacing: 2px;
+	margin: 6px;
+	font-size: 1.15rem;
+	font-family: Roboto, Arial, Helvetica, sans-serif;
+	text-transform: uppercase;
 }

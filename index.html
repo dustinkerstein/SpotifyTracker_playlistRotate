@@ -10,36 +10,45 @@
 <body>
 	<p id='loading'>Laden...</p>
 	<div id="notLoggedIn">
-		<p>Welkom! <a id='newLogin'>Klik hier om je aan te melden via Spotify</a></p>
+		<div class="container">
+			<p>Welkom! <a id='newLogin'>Klik hier om je aan te melden via Spotify</a></p>
+		</div>
 	</div>
 	<div id="expired">
-		<p>De sessie is verlopen! <a id='expiredLogin'>Opnieuw inloggen</a></p>
+		<div class="container">
+			<p>De sessie is verlopen! <a id='expiredLogin'>Opnieuw inloggen</a></p>
+		</div>
 	</div>
 	<div id="loggedIn">
-		<center>
-			<img src="Images/header.png" alt="Header image" id="header">
+		<center id="header">
+			<img src="Images/header.jpeg" alt="Header image" id="headerImg">
 		</center>
-		<p>Hoera! Je bent ingelogd<span id='user'></span>!</p>
-		<button id='signout'>Uitloggen</button>
-		<br>
-		<p id="playerData"></p>
-		<div id="playback">
-			<p id="timer"></p>
-			<button id='prev'>Vorige</button>
-			<button id='pauseplay'>Play</button>
-			<button id='next'>Volgende</button>
-			<button id='shuffle'>Zet shuffle aan/uit</button>
+		<div class="container">
+			<p>Hoera! Je bent ingelogd<span id='user'></span>!</p>
+			<button id='signout'>Uitloggen</button>
+
+			<div class="container shaded-container">
+				<p id="playerData"></p>
+				<div id="playback">
+					<p id="timer"></p>
+					<button id='prev'>Vorige</button>
+					<button id='pauseplay'>Play</button>
+					<button id='next'>Volgende</button>
+					<button id='shuffle'>Zet shuffle aan/uit</button>
+				</div>
+				<button id='lastPlayer'>Doorgaan met afspelen</button>
+			</div>
+			<div class="container shaded-container">
+				<button id='search'>Zoeken</button>
+				<br>
+				<div id="searchResults"></div>
+			</div>
+			<div class="container shaded-container">
+				<button id='loadFavourites'>Laad je favorieten-lijst</button>
+				<ol id='artists'></ol>
+				<br>
+				<ol id='tracks'></ol>
+			</div>
 		</div>
-		<button id='lastPlayer'>Doorgaan met afspelen</button>
-		<br>
-		<br>
-		<button id='search'>Zoeken</button>
-		<br>
-		<div id="searchResults"></div>
-		<br><br>
-		<button id='loadFavourites'>Laad je favorieten-lijst</button>
-		<ol id='artists'></ol>
-		<br>
-		<ol id='tracks'></ol>
 	</div>
 </body>
