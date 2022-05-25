@@ -7,7 +7,7 @@
 			if('localStorage' in window){
 				localStorage.setItem("token_expiration", "" + new Date(+new Date() + (+ei)*1000));
 				localStorage.setItem("access_token", at);
-				location = "../SpotifyTracker/"
+				location = location.href.split("/SpotifyTracker").length > 1 ? "../SpotifyTracker/" : "../"
 			}else{
 				erreur();
 			}
