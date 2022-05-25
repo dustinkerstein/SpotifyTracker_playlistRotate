@@ -2,6 +2,7 @@ var access_token;
 var player = {};
 var isPaused = false;
 var hasAlerted = false;
+var isLoggingOff = false;
 var searchQuery;
 var availableDevice;
 var playerUpdate;
@@ -59,7 +60,7 @@ onload = function () {
 
 function request(method, path, callback, data) {
 	if (!checkSignIn()) {
-		if (!hasAlerted) {
+		if (!hasAlerted && !isLoggingOff) {
 			hasAlerted = true;
 			alert("Er ging iets mis met de authorisatie!");
 			location.reload();
@@ -121,6 +122,7 @@ function loadFavourites() {
 function signOut() {
 	localStorage.removeItem('token_expiration');
 	localStorage.removeItem('access_token');
+	isLoggingOff = true;
 	location.reload();
 }
 
