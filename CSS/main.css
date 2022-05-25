@@ -1,0 +1,29 @@
+body {
+	background: #1ed760;
+	color: white;
+	padding: 24px;
+	font-size: 1.25rem;
+}
+
+#loggedIn:not(.shown),
+#notLoggedIn:not(.shown),
+#expired:not(.shown),
+#playback:not(.shown),
+#lastPlayer:not(.shown) {
+	display: none;
+}
+
+#loading.hidden {
+	display: none;
+}
+
+* {
+	font-family: Roboto, Arial, Helvetica, sans-serif;
+}
+
+
+#header {
+	width: 80%;
+	position: relative;
+	left: 10%;
+}

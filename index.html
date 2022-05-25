@@ -1,25 +1,10 @@
 <head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-	<link rel="icon" href="Logo.png">
-
-	<script src="Main.js"></script>
-	<style>
-		#loggedIn:not(.shown),
-		#notLoggedIn:not(.shown),
-		#expired:not(.shown),
-		#playback:not(.shown), #lastPlayer:not(.shown) {
-			display: none;
-		}
-
-		#loading.hidden {
-			display: none;
-		}
-
-		* {
-			font-family: Roboto, Arial, Helvetica, sans-serif;
-		}
-	</style>
+	<link rel="icon" href="Images/Logo.png">
+	<link rel="stylesheet" type="text/css" href="CSS/main.css">
+	<script src="JS/main.js"></script>
 </head>
 
 <body>
@@ -31,7 +16,9 @@
 		<p>De sessie is verlopen! <a id='expiredLogin'>Opnieuw inloggen</a></p>
 	</div>
 	<div id="loggedIn">
-		<img src="header.png" style='width: 80%; position: relative; left: 10%;' alt="Header image" id="header">
+		<center>
+			<img src="Images/header.png" alt="Header image" id="header">
+		</center>
 		<p>Hoera! Je bent ingelogd<span id='user'></span>!</p>
 		<button id='signout'>Uitloggen</button>
 		<br>
