@@ -11,7 +11,7 @@
 
 # ToDo
 1. OAuth timeout at 60 minutes. Would need to get renewal token. Might ping upstream maintainer about this.
-1. Due to current polling design / timing, there is brief playback of the next song before switching playlists
+1. Due to current polling design / timing, there is brief playback of the next song before switching playlists. Could possibly use progress updates and set volume immediately before / after song change.
 
 # Known Issues
 - [Sonos playback broken](https://community.spotify.com/t5/Spotify-for-Developers/Sonos-speakers-not-showing-in-GET-player-devices/td-p/5175462)
