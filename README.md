@@ -6,6 +6,7 @@
 1. Start your preferred http server
 1. Create a new [Spotify app](https://developer.spotify.com/dashboard/applications/)
 1. Edit Spotify app and add Redirect URI, ie. `http://localhost:8080/callback.html`
+1. Configure `playlistIDs` and `clientID` variables in `main.js`
 1. Launch browser to root URI, ie. http://localhost:8080/
 
 # ToDo
