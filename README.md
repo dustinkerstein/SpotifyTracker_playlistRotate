@@ -8,5 +8,8 @@
 1. Edit Spotify app and add Redirect URI, ie. `http://localhost:8080/callback.html`
 1. Launch browser to root URI, ie. http://localhost:8080/
 
+# ToDo
+1. Due to current polling design / timing, there is brief playback of the next song before switching playlists
+
 # Known Issues
 - [Sonos playback broken](https://community.spotify.com/t5/Spotify-for-Developers/Sonos-speakers-not-showing-in-GET-player-devices/td-p/5175462)

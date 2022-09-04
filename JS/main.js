@@ -9,7 +9,19 @@ var playerUpdate;
 var clientID = '1bf748e967504f8698da96022cd7f599';
 var auth_url = "https://accounts.spotify.com/authorize?client_id=" + clientID + "&redirect_uri=" + encodeURI(location.origin + (location.href.split("/SpotifyTracker/").length > 1 ? "/SpotifyTracker" : '') + "/callback.html") + "&scope=user-read-private%20user-read-email%20user-modify-playback-state%20user-read-playback-state%20user-top-read%20user-read-recently-played&response_type=token";
 
+var playlistIDs = ['5ogNqu3QZ2VYrMPmVOcFtw','7eB2erND497hJnkSbFiycp','41HMncEsmXdlfhIBruGU2l'];
+var currentSongID;
+var previousSongID;
+var numberSongsToPlay = 2;
+var uniqueSongCounter = 0;
+var playlistIndex;
+var isRotationEnabled = false;
+var nextTrigger = false;
+
 onload = function () {
+	playlistIndex = Math.floor(Math.random() * playlistIDs.length);
+	console.log("onload random playlistIndex: " + playlistIndex);
+
 	if (!('localStorage' in window)) {
 		document.write("<p>Sorry, the page is designed only for modern browsers.</p>");
 	} else {
@@ -29,13 +41,24 @@ onload = function () {
 					controlPlayback(player ? (player.is_playing ? 'pause' : 'play') : '');
 				});
 				document.getElementById('next').addEventListener('click', function () {
+					nextTrigger = true;
 					controlPlayback('next', 'POST');
 				});
 				document.getElementById('prev').addEventListener('click', function () {
 					controlPlayback('previous', 'POST');
 				});
-				document.getElementById('shuffle').addEventListener('click', function () {
-					controlPlayback('shuffle', 'PUT', '?state=' + ("" + (!player.shuffle_state) || 'true'));
+				document.getElementById('rotation').addEventListener('click', function () {
+					if (!isRotationEnabled) {
+						console.log("Enabling playlist rotation");
+						isRotationEnabled = true;
+						uniqueSongCounter = numberSongsToPlay;
+						nextTrigger = true;
+						rotatePlaylist();
+					} else {
+						console.log("Disabling playlist rotation");
+						isRotationEnabled = false;
+						uniqueSongCounter = 0;
+					}
 				});
 
 				request("GET", 'me', function () {
@@ -57,6 +80,20 @@ onload = function () {
 		}
 		document.getElementById("loading").classList.add("hidden");
 	}
+}
+
+function rotatePlaylist() {
+	if (isRotationEnabled && ++uniqueSongCounter > numberSongsToPlay) {
+		uniqueSongCounter = 0;
+		playlistIndex = (playlistIndex + 1) % playlistIDs.length;
+		playlistIndex = isNaN(parseFloat(playlistIndex)) ? 0 : playlistIndex;
+		let uri = 'spotify:playlist:' + playlistIDs[playlistIndex];
+		let data = { context_uri: uri, };
+		console.log("ROTATING. playlistIndex: " + playlistIndex + " playlistID: " + playlistIDs[playlistIndex] + " uri: " + uri);
+		controlPlayback('play', "PUT", '', data);
+		return true;
+	}
+	return false;
 }
 
 function request(method, path, callback, data) {
@@ -157,12 +194,24 @@ function updatePlayer() {
 				player = res;
 				playerUpdate = +new Date();
 
-				let html = "<b>Now playing" + (!player.is_playing ? " (paused)" : "") + ":</b> ";
+				let html = "<b>Now playing:</b> ";
 				html += player.item.artists[0].name + " - " + player.item.name;
+
+				currentSongID =  player.item.id;
+				if (nextTrigger) {
+					nextTrigger = false;
+					previousSongID = currentSongID;
+					uniqueSongCounter = 0;
+					console.log("nextTrigger detected");
+				} else if (currentSongID != previousSongID) {
+					console.log("New song detected");
+					previousSongID = currentSongID;
+					rotatePlaylist();
+				}
 
 				document.getElementById("pauseplay").innerHTML = player.is_playing ? "Pause" : "Play";
 				playerEl.innerHTML = html;
-				document.getElementById("shuffle").innerHTML = 'Set shuffle ' + (res['shuffle_state'] ? 'off' : 'on');
+				document.getElementById("rotation").innerHTML = 'Set rotation ' + (isRotationEnabled ? 'off' : 'on');
 				updateTimer();
 				document.getElementById("playback").classList.add("shown");
 				document.getElementById("lastPlayer").classList.remove("shown");
