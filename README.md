@@ -9,7 +9,7 @@
 1. Configure `playlistIDs` and `clientID` variables in `main.js`
 1. Launch browser to root URI, ie. http://localhost:8080/
 
-# ToDo
+# To Do
 1. OAuth timeout at 60 minutes. Would need to get renewal token. Might ping upstream maintainer about this.
 1. Due to current polling design / timing, there is brief playback of the next song before switching playlists. Could possibly use progress updates and set volume immediately before / after song change.
 
