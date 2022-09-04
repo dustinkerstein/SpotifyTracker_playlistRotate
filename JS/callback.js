@@ -16,5 +16,5 @@
 	}
 
 	function erreur(){
-		document.write("Er is iets mis gegaan. <a href='../SpotifyTracker/'>Terug naar home</a>");
+		document.write("Something went wrong. <a href='../SpotifyTracker/'>Go home</a>");
 	}

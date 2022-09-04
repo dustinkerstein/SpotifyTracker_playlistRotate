@@ -2,49 +2,47 @@
 	<meta charset="UTF-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Spotity Playlist Rotate</title>
 	<link rel="icon" href="Images/Logo.png">
 	<link rel="stylesheet" type="text/css" href="CSS/main.css">
 	<script src="JS/main.js"></script>
 </head>
 
 <body>
-	<p id='loading'>Laden...</p>
+	<p id='loading'>Loading...</p>
 	<div id="notLoggedIn">
 		<div class="container">
-			<p>Welkom! <a id='newLogin'>Klik hier om je aan te melden via Spotify</a></p>
+			<p>Welcome! <a id='newLogin'>Login via Spotify</a></p>
 		</div>
 	</div>
 	<div id="expired">
 		<div class="container">
-			<p>De sessie is verlopen! <a id='expiredLogin'>Opnieuw inloggen</a></p>
+			<p>Session expired! <a id='expiredLogin'>Login again</a></p>
 		</div>
 	</div>
 	<div id="loggedIn">
-		<center id="header">
-			<img src="Images/header.jpeg" alt="Header image" id="headerImg">
-		</center>
 		<div class="container">
-			<p>Hoera! Je bent ingelogd<span id='user'></span>!</p>
-			<button id='signout'>Uitloggen</button>
+			<p>Logged in<span id='user'></span></p>
+			<button id='signout'>Log out</button>
 
 			<div class="container shaded-container">
 				<p id="playerData"></p>
 				<div id="playback">
 					<p id="timer"></p>
-					<button id='prev'>Vorige</button>
+					<button id='prev'>Prev</button>
 					<button id='pauseplay'>Play</button>
-					<button id='next'>Volgende</button>
-					<button id='shuffle'>Zet shuffle aan/uit</button>
+					<button id='next'>Next</button>
+					<button id='shuffle'>Set shuffle on/off</button>
 				</div>
-				<button id='lastPlayer'>Doorgaan met afspelen</button>
+				<button id='lastPlayer'>Continue playing</button>
 			</div>
 			<div class="container shaded-container">
-				<button id='search'>Zoeken</button>
+				<button id='search'>Search</button>
 				<br>
 				<div id="searchResults"></div>
 			</div>
 			<div class="container shaded-container">
-				<button id='loadFavourites'>Laad je favorieten-lijst</button>
+				<button id='loadFavourites'>Load favorites list</button>
 				<ol id='artists'></ol>
 				<br>
 				<ol id='tracks'></ol>

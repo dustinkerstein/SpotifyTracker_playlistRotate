@@ -6,11 +6,12 @@ var isLoggingOff = false;
 var searchQuery;
 var availableDevice;
 var playerUpdate;
-var auth_url = "https://accounts.spotify.com/authorize?client_id=2f8e2442a3ec491cbdcfa556487e9de4&redirect_uri=" + encodeURI(location.origin + (location.href.split("/SpotifyTracker/").length > 1 ? "/SpotifyTracker" : '') + "/callback.html") + "&scope=user-read-private%20user-read-email%20user-modify-playback-state%20user-read-playback-state%20user-top-read%20user-read-recently-played&response_type=token";
+var clientID = '1bf748e967504f8698da96022cd7f599';
+var auth_url = "https://accounts.spotify.com/authorize?client_id=" + clientID + "&redirect_uri=" + encodeURI(location.origin + (location.href.split("/SpotifyTracker/").length > 1 ? "/SpotifyTracker" : '') + "/callback.html") + "&scope=user-read-private%20user-read-email%20user-modify-playback-state%20user-read-playback-state%20user-top-read%20user-read-recently-played&response_type=token";
 
 onload = function () {
 	if (!('localStorage' in window)) {
-		document.write("<p>Sorry, de pagina is nu alleen gemaakt voor moderne browsers (Chrome, bij voorkeur).</p>");
+		document.write("<p>Sorry, the page is designed only for modern browsers.</p>");
 	} else {
 		let expiration = localStorage.getItem("token_expiration");
 		if (expiration) {
@@ -40,7 +41,7 @@ onload = function () {
 				request("GET", 'me', function () {
 					if (this.readyState == XMLHttpRequest.DONE && this.status === 200) {
 						let res = JSON.parse(this.response);
-						document.getElementById("user").innerHTML = " als " + res.display_name + " (" + res.email + ")";
+						document.getElementById("user").innerHTML = " as " + res.display_name + " (" + res.email + ")";
 					}
 				})
 
@@ -62,7 +63,7 @@ function request(method, path, callback, data) {
 	if (!checkSignIn()) {
 		if (!hasAlerted && !isLoggingOff) {
 			hasAlerted = true;
-			alert("Er ging iets mis met de authorisatie!");
+			alert("Something went wrong with authorization.");
 			location.reload();
 		}
 		return;
@@ -75,10 +76,10 @@ function request(method, path, callback, data) {
 }
 
 function loadFavourites() {
-	if (document.getElementById("loadFavourites").innerHTML != 'Laad je favorieten-lijst') {
+	if (document.getElementById("loadFavourites").innerHTML != 'Load favorites list') {
 		document.getElementById("artists").innerHTML = '';
 		document.getElementById("tracks").innerHTML = '';
-		document.getElementById("loadFavourites").innerHTML = 'Laad je favorieten-lijst';
+		document.getElementById("loadFavourites").innerHTML = 'Load favorites list';
 		return;
 	}
 	request('GET', 'me/top/artists?time_range=short_term', function () {
@@ -87,16 +88,16 @@ function loadFavourites() {
 			document.getElementById("tracks").innerHTML = '';
 				result = JSON.parse(this.response);
 			if (!result || !('items' in result)) {
-				document.getElementById("artists").innerHTML = '<b>Er ging iets mis!</b>';
+				document.getElementById("artists").innerHTML = '<b>Something went wrong.</b>';
 			} else {
 				let items = result.items;
-				let html = '<h1>Meest geluisterde artiesten (laatste 4 weken)</h1>';
+				let html = '<h1>Most listened to artists (last 4 weeks)</h1>';
 				for (let i = 0; i < items.length; i++) {
 					const el = items[i];
 					html += '<li>' + el.name + '</li>'
 				}
 				document.getElementById("artists").innerHTML = html;
-				document.getElementById("loadFavourites").innerHTML = 'Maak lijst met favorieten leeg';
+				document.getElementById("loadFavourites").innerHTML = 'Clear favorites list';
 			}
 		}
 	});
@@ -105,10 +106,10 @@ function loadFavourites() {
 		if (this.readyState == XMLHttpRequest.DONE && this.status === 200) {
 			result = JSON.parse(this.response);
 			if (!result || !('items' in result)) {
-				alert("Er ging iets mis!");
+				alert("Something went wrong.");
 			} else {
 				let items = result.items;
-				let html = '<h1>Meest geluisterde nummers (laatste 4 weken)</h1>';
+				let html = '<h1>Most listened to songs (last 4 weeks)</h1>';
 				for (let i = 0; i < items.length; i++) {
 					const el = items[i];
 					html += '<li>' + el.artists[0].name + " - " + el.name + '</li>'
@@ -156,17 +157,17 @@ function updatePlayer() {
 				player = res;
 				playerUpdate = +new Date();
 
-				let html = "<b>Nu aan het afspelen" + (!player.is_playing ? " (gepauzeerd)" : "") + ":</b> ";
+				let html = "<b>Now playing" + (!player.is_playing ? " (paused)" : "") + ":</b> ";
 				html += player.item.artists[0].name + " - " + player.item.name;
 
-				document.getElementById("pauseplay").innerHTML = player.is_playing ? "Pauzeer" : "Play";
+				document.getElementById("pauseplay").innerHTML = player.is_playing ? "Pause" : "Play";
 				playerEl.innerHTML = html;
-				document.getElementById("shuffle").innerHTML = 'Zet shuffle ' + (res['shuffle_state'] ? 'uit' : 'aan');
+				document.getElementById("shuffle").innerHTML = 'Set shuffle ' + (res['shuffle_state'] ? 'off' : 'on');
 				updateTimer();
 				document.getElementById("playback").classList.add("shown");
 				document.getElementById("lastPlayer").classList.remove("shown");
 			} else {
-				playerEl.innerHTML = "<b>Momenteel niets aan het afspelen.</b>";
+				playerEl.innerHTML = "<b>Nothing playing at the moment.</b>";
 				document.getElementById("playback").classList.remove("shown");
 				checkDevices();
 			}
@@ -227,7 +228,7 @@ function search() {
 	document.getElementById("searchResults").innerHTML = '';
 	setTimeout(function () {
 		searchQuery = '';
-		searchQuery = prompt("Zoekopdracht");
+		searchQuery = prompt("Search");
 		if (!searchQuery || !searchQuery.length) return;
 		request('GET', 'search?type=track,album,artist&market=nl&q=' + searchQuery, function () {
 			if (this.readyState == XMLHttpRequest.DONE && this.status === 200) {
@@ -236,29 +237,29 @@ function search() {
 				let artists = res.artists.items;
 				let tracks = res.tracks.items;
 
-				let html = '<br><b>Gezocht op: </b>' + searchQuery + '<br><button id="clearSearch">Clear zoekopdracht</button><br><br><br>';
+				let html = '<br><b>Searched for: </b>' + searchQuery + '<br><button id="clearSearch">Clear search</button><br><br><br>';
 
 
 				if (artists.length) {
-					html += '<b>Gevonden Artiesten</b><ul>';
+					html += '<b>Found Artists</b><ul>';
 					for (let i = 0; i < artists.length && i < 3; i++) {
-						html += '<li>' + artists[i].name + "&nbsp;&nbsp;&nbsp;<button class='playURI' URI=" + artists[i].uri + ">Afspelen</button></li>";
+						html += '<li>' + artists[i].name + "&nbsp;&nbsp;&nbsp;<button class='playURI' URI=" + artists[i].uri + ">Play</button></li>";
 					}
 					html += '</ul>';
 				}
 
 				if (tracks.length) {
-					html += '<b>Gevonden Nummers</b><ul>';
+					html += '<b>Found Songs</b><ul>';
 					for (let i = 0; i < tracks.length && i < 12; i++) {
-						html += '<li>' + tracks[i].artists[0].name + " - " + tracks[i].name + "&nbsp;&nbsp;&nbsp;<button class='playURI' URI=" + tracks[i].uri + ">Afspelen</button></li>";
+						html += '<li>' + tracks[i].artists[0].name + " - " + tracks[i].name + "&nbsp;&nbsp;&nbsp;<button class='playURI' URI=" + tracks[i].uri + ">Play</button></li>";
 					}
 					html += '</ul>';
 				}
 
 				if (albums.length) {
-					html += '<b>Gevonden Albums</b><ul>';
+					html += '<b>Found Albums</b><ul>';
 					for (let i = 0; i < albums.length && i < 3; i++) {
-						html += '<li>' + albums[i].artists[0].name + " - " + albums[i].name + "&nbsp;&nbsp;&nbsp;<button class='playURI' URI=" + albums[i].uri + ">Afspelen</button></li>";
+						html += '<li>' + albums[i].artists[0].name + " - " + albums[i].name + "&nbsp;&nbsp;&nbsp;<button class='playURI' URI=" + albums[i].uri + ">Play</button></li>";
 					}
 					html += '</ul>';
 				}
