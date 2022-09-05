@@ -98,9 +98,7 @@
             } else {
               access_token = localStorage.getItem("access_token");
               document.getElementById("loggedIn").classList.add("shown");
-              document.getElementById('signout').addEventListener('click', function() {
-                signOut(e);
-              });
+              document.getElementById('signout').addEventListener('click', signOut);
               document.getElementById('loadFavourites').addEventListener('click', loadFavourites);
               document.getElementById('lastPlayer').addEventListener('click', newPlayback);
               document.getElementById('search').addEventListener('click', search);
@@ -168,7 +166,7 @@
             if (!hasAlerted && !isLoggingOff) {
               hasAlerted = true;
               alert("Something went wrong with authorization.");
-              location.reload();
+              window.open(e,'_top');
             }
             return;
           }
@@ -224,11 +222,10 @@
           });
         }
 
-        function signOut(e) {
+        function signOut() {
           localStorage.removeItem('token_expiration');
           localStorage.removeItem('access_token');
           isLoggingOff = true;
-          location.reload();
           window.open(e,'_top');
         }
 
