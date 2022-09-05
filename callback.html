@@ -1,13 +1,57 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <base target="_top">
 	<meta charset="UTF-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Spotity Playlist Rotate</title>
-	<script src="JS/callback.js"></script>
+  <style>
+			body {
+				background: #1ed760;
+				color: white;
+				font-size: 1.25rem;
+			}
+
+			body,
+			html {
+				margin: 0;
+				padding: 0;
+			}
+	</style>
+	<script>	
+    google.script.url.getLocation(function(location) {
+      console.log(location);
+      console.log(location.parameters);
+      console.log(location.hash);
+			at = (location.hash.split("access_token=")[1]||"").split("&")[0];
+			ei = (location.hash.split("expires_in=")[1]||"").split("&")[0];
+			if (at && ei){
+				if ('localStorage' in window){
+					localStorage.setItem("token_expiration", "" + new Date(+new Date() + (+ei)*1000));
+					localStorage.setItem("access_token", at);
+          google.script.run
+          .withSuccessHandler((e) => {
+            console.log("getURL success:", e);
+            window.open(e,'_top');
+          })
+          .withFailureHandler((e) => {
+            console.log("getURL failure:", e);
+          })
+          .getURL();
+				} else{
+					erreur();
+				}
+			} else{
+				erreur();
+			}
+    });
+
+		function erreur(){
+			document.write("Something went wrong. <a href='../SpotifyTracker/'>Go home</a>");
+		}
+	</script>
 </head>
 <body>
-	Loading...
 </body>
 </html>
