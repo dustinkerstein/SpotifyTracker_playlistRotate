@@ -17,3 +17,8 @@
 
 # Known Issues
 - [Sonos playback broken](https://community.spotify.com/t5/Spotify-for-Developers/Sonos-speakers-not-showing-in-GET-player-devices/td-p/5175462)
+- There might be some funky behavior when using multiple remotes and hitting next / previous. Needs to be investigated at some point. 
+- Related to the above, there's some business logic to define for how to handle next / previous clicks. Ie. should they stay within the current playlist, or should next (likely not previous) count towards the "uniqueSongCounter"? Currently, if you use the next / previous buttons in the custom app, it won't count those, but external next / previous events (ie. from your phone) do count towards "uniqueSongCounter".
+
+# Other Notes
+- Change `numberSongsToPlay` in `index.html` to the number of songs you'd like to play before moving to the next playlist. This could easily be moved to the UI.
