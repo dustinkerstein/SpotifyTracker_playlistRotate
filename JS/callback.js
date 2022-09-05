@@ -1,23 +1,29 @@
-onload = function () {
-	url = location.href;
-	at = (url.split("access_token=")[1] || "").split("&")[0];
-	ei = (url.split("expires_in=")[1] || "").split("&")[0];
-	if (at && ei) {
-		if ('localStorage' in window) {
-			localStorage.setItem("token_expiration", "" + new Date(+new Date() + (+ei) * 1000));
-			localStorage.setItem("access_token", at);
-			location = url.split("/SpotifyTracker").length > 1 ? "../SpotifyTracker/" : "../"
-			// request("POST", "token", function() {
-			// 	if (this.readyState == XMLHttpRequest.DONE && this.status === 200) {
-			// 		console.log(this)
-			// 	}
-			// }, {
-			// 	grant_type: "authorization_token",
-			// 	access_token: at
-			// })
-			
-			// grant_type: 'refresh_token',
-			// refresh_token: refresh_token
+onload = async function () {
+	auth_code = (new URLSearchParams(window.location.search)).get('code')
+	if (auth_code) {
+		if ('localStorage' in window && 'fetch' in window) {
+			var xhr = new XMLHttpRequest();
+			var data = "grant_type=authorization_code&code=" + auth_code + "&redirect_uri=" + redirectURI;
+			xhr.addEventListener("readystatechange", function () {
+				if (this.readyState == XMLHttpRequest.DONE && this.status === 200) {
+					let res = JSON.parse(this.response)
+					if (res.access_token) {
+						access_token = res.access_token
+						localStorage.setItem("access_token", access_token);
+						localStorage.setItem("refresh_token", res.refresh_token);
+						localStorage.setItem("token_expiration", "" + new Date(+new Date() + 0 + (+res.expires_in) * 1000))
+						location = location.href.split("/SpotifyTracker").length > 1 ? "../SpotifyTracker/" : "../"
+					} else {
+						writeError();
+					}
+				}
+			});
+
+			xhr.open("POST", "https://accounts.spotify.com/api/token");
+			xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+			xhr.setRequestHeader("Authorization", "Basic " + btoa(clientID + ':' + clientSecret))
+
+			xhr.send(data);
 		} else {
 			writeError();
 		}
