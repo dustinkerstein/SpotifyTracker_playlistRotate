@@ -1,16 +1,13 @@
-var access_token;
 var player = {};
 var isPaused = false;
 var hasAlerted = false;
-var isLoggingOff = false;
 var searchQuery;
 var availableDevice;
 var playerUpdate;
-var auth_url = "https://accounts.spotify.com/authorize?client_id=2f8e2442a3ec491cbdcfa556487e9de4&redirect_uri=" + encodeURI(location.origin + (location.href.split("/SpotifyTracker/").length > 1 ? "/SpotifyTracker" : '') + "/callback.html") + "&scope=user-read-private%20user-read-email%20user-modify-playback-state%20user-read-playback-state%20user-top-read%20user-read-recently-played&response_type=token";
 
 onload = function () {
 	if (!('localStorage' in window)) {
-		document.write("<p>Sorry, de pagina is nu alleen gemaakt voor moderne browsers (Chrome, bij voorkeur).</p>");
+		document.write("<p>Sorry, de pagina is alleen gemaakt voor moderne browsers (Chrome, bij voorkeur).</p>");
 	} else {
 		let expiration = localStorage.getItem("token_expiration");
 		if (expiration) {
@@ -58,21 +55,6 @@ onload = function () {
 	}
 }
 
-function request(method, path, callback, data) {
-	if (!checkSignIn()) {
-		if (!hasAlerted && !isLoggingOff) {
-			hasAlerted = true;
-			alert("Er ging iets mis met de authorisatie!");
-			location.reload();
-		}
-		return;
-	}
-	let xml = new XMLHttpRequest();
-	xml.open(method, 'https://api.spotify.com/v1/' + path);
-	xml.onreadystatechange = callback;
-	xml.setRequestHeader('Authorization', 'Bearer ' + access_token)
-	xml.send(data ? JSON.stringify(data) : undefined);
-}
 
 function loadFavourites() {
 	if (document.getElementById("loadFavourites").innerHTML != 'Laad je favorieten-lijst') {
@@ -119,30 +101,6 @@ function loadFavourites() {
 	});
 }
 
-function signOut() {
-	localStorage.removeItem('token_expiration');
-	localStorage.removeItem('access_token');
-	isLoggingOff = true;
-	location.reload();
-}
-
-
-function controlPlayback(action, method, params, data) {
-	request(method || 'PUT', 'me/player/' + action + (params || ""), function () {
-		if (this.readyState == XMLHttpRequest.DONE && this.status === 200) {
-			let result = JSON.parse(this.response);
-			updatePlayer();
-		}
-	}, data || {})
-}
-
-function checkSignIn() {
-	let expiration = localStorage.getItem("token_expiration");
-	if (expiration && (+new Date(expiration) > +new Date())) {
-		return true;
-	} else return false;
-}
-
 
 function updatePlayer() {
 	request("GET", "me/player", function () {
@@ -157,7 +115,9 @@ function updatePlayer() {
 				playerUpdate = +new Date();
 
 				let html = "<b>Nu aan het afspelen" + (!player.is_playing ? " (gepauzeerd)" : "") + ":</b> ";
-				html += player.item.artists[0].name + " - " + player.item.name;
+				if(player.item) {
+					html += player.item.artists[0].name + " - " + player.item.name;
+				}
 
 				document.getElementById("pauseplay").innerHTML = player.is_playing ? "Pauzeer" : "Play";
 				playerEl.innerHTML = html;

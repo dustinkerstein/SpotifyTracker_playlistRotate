@@ -40,6 +40,7 @@ html {
 .container {
 	padding: 24px;
 	margin: 16px 0;
+	border-radius: 12px;
 }
 
 .shaded-container {
@@ -59,4 +60,12 @@ button {
 	font-size: 1.15rem;
 	font-family: Roboto, Arial, Helvetica, sans-serif;
 	text-transform: uppercase;
+	cursor: pointer;
+	transition-duration: 400ms;
+	box-shadow: #00000000 4px 4px 10px;
+}
+
+button:hover {
+	background: rgba(0, 0, 0, .28);
+	box-shadow: #00000044 4px 4px 10px;
 }
