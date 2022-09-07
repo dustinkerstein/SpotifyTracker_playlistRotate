@@ -82,10 +82,11 @@
         var availableDevice;
         var playerUpdate;
         var auth_url = "https://accounts.spotify.com/authorize?client_id=" + e.clientID + "&redirect_uri=" + encodeURI(e.execURL + "?callback") + "&scope=user-read-private%20user-read-email%20user-modify-playback-state%20user-read-playback-state%20user-top-read%20user-read-recently-played&response_type=code";
-        var currentSongID;
         var previousSongID;
-        var uniqueSongCounter = 0;
+        var lastVolume;
         var playlistIndex;
+        var volumeState = 0;
+        var uniqueSongCounter = 0;
         var isRotationEnabled = false;
         var nextTrigger = false;
 
@@ -117,10 +118,9 @@
               document.getElementById('rotation').addEventListener('click', function () {
                 if (!isRotationEnabled) {
                   console.log("Enabling playlist rotation");
-                  isRotationEnabled = true;
                   uniqueSongCounter = e.numberSongsToPlay;
-                  nextTrigger = true;
                   rotatePlaylist();
+                  isRotationEnabled = true;
                 } else {
                   console.log("Disabling playlist rotation");
                   isRotationEnabled = false;
@@ -142,7 +142,7 @@
         } 
 
         function rotatePlaylist() {
-          if (isRotationEnabled && ++uniqueSongCounter > e.numberSongsToPlay) {
+          if (++uniqueSongCounter > e.numberSongsToPlay) {
             uniqueSongCounter = 0;
             playlistIndex = (playlistIndex + 1) % e.playlistIDs.length;
             playlistIndex = isNaN(parseFloat(playlistIndex)) ? 0 : playlistIndex;
@@ -284,16 +284,28 @@
               html += player.item.artists[0].name + " - " + player.item.name;
             }
 
-            currentSongID =  player.item.id;
-            if (nextTrigger) {
-              nextTrigger = false;
-              previousSongID = currentSongID;
-              uniqueSongCounter = 0;
-              console.log("nextTrigger detected");
-            } else if (currentSongID != previousSongID) {
-              console.log("New song detected");
-              previousSongID = currentSongID;
-              rotatePlaylist();
+            if (isRotationEnabled) {
+              if (volumeState <= 1 && parseFloat(player.progress_ms) / parseFloat(player.item.duration_ms) >= 0.992) {
+                volumeState = 2;
+                lastVolume = player.device && player.device.volume_percent ? player.device.volume_percent : 100;
+                console.log("Muting. lastVolume: " + lastVolume);
+                controlPlayback('volume', "PUT", '?volume_percent=0');
+              } else if (previousSongID && player.item.id != previousSongID && uniqueSongCounter < e.numberSongsToPlay ) {
+                volumeState = 1;
+                console.log("Unmuting. lastVolume: " + lastVolume);
+                controlPlayback('volume', "PUT", '?volume_percent=' + lastVolume);
+              }
+              if (nextTrigger && player.item.id != previousSongID) {
+                nextTrigger = false;
+                previousSongID = player.item.id;
+                console.log("nextTrigger detected");
+              } else if (player.item.id != previousSongID) {
+                console.log("New song detected");
+                previousSongID = player.item.id;
+                rotatePlaylist();
+              }
+            } else {
+              lastVolume = player.device && player.device.volume_percent ? player.device.volume_percent : 100;
             }
 
             document.getElementById("pauseplay").innerHTML = player.is_playing ? "Pause" : "Play";
