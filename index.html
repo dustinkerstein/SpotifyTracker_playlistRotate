@@ -119,8 +119,9 @@
                 if (!isRotationEnabled) {
                   console.log("Enabling playlist rotation");
                   uniqueSongCounter = e.numberSongsToPlay;
-                  rotatePlaylist();
+                  nextTrigger = true;
                   isRotationEnabled = true;
+                  rotatePlaylist();
                 } else {
                   console.log("Disabling playlist rotation");
                   isRotationEnabled = false;
@@ -297,6 +298,7 @@
               }
               if (nextTrigger && player.item.id != previousSongID) {
                 nextTrigger = false;
+                uniqueSongCounter = 1;
                 previousSongID = player.item.id;
                 console.log("nextTrigger detected");
               } else if (player.item.id != previousSongID) {
@@ -306,6 +308,7 @@
               }
             } else {
               lastVolume = player.device && player.device.volume_percent ? player.device.volume_percent : 100;
+              previousSongID = player.item.id;
             }
 
             document.getElementById("pauseplay").innerHTML = player.is_playing ? "Pause" : "Play";
