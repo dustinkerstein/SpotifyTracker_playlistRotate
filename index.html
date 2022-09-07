@@ -239,7 +239,7 @@
             alert("Something went wrong!");
           } else {
             let items = result_tracks.items;
-            let html = '<h1>Most listened to artists (last 4 weeks)</h1>';
+            let html = '<h1>Most listened to songs (last 4 weeks)</h1>';
             for (let i = 0; i < items.length; i++) {
               const el = items[i];
               html += '<li>' + el.artists[0].name + " - " + el.name + '</li>'
