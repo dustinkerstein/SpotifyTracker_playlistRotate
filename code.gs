@@ -1,4 +1,8 @@
-const url = ''; // Replace with the test dev URL after deploying as a web app
+const numberSongsToPlay = 2; // Set to the number of songs you'd like to play from each playlist
+const playlistIDs = ['','','']; // Replace with the playlist IDs you'd like to rotate
+const clientID = ''; // Replace with clientID found on https://developer.spotify.com/dashboard/applications/
+const clientSecret = ''; // Replace with clientSecret found on https://developer.spotify.com/dashboard/applications/
+const execURL = ''; // Replace with the test dev URL after deploying as a web app
 
 function doGet(e) {
   Logger.log(e);
@@ -17,6 +21,12 @@ function doGet(e) {
   }
 }
 
-function getURL() {
-  return url;
+function getData() {
+  const data = {};
+  data.playlistIDs = playlistIDs;
+  data.execURL = execURL;
+  data.numberSongsToPlay = numberSongsToPlay;
+  data.clientID = clientID;
+  data.clientSecret = clientSecret;
+  return data;
 }

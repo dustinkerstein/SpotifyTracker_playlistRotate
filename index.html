@@ -38,10 +38,14 @@
 			.container {
 				padding: 24px;
 				margin: 16px 0;
+        border-radius: 12px;
 			}
 
 			.shaded-container {
 				background-color: rgba(0, 0, 0, .1);
+        cursor: pointer;
+        transition-duration: 400ms;
+        box-shadow: #00000000 4px 4px 10px;
 			}
 
 			button {
@@ -59,11 +63,16 @@
 				text-transform: uppercase;
 				cursor: pointer;
 			}
+
+      button:hover {
+        background: rgba(0, 0, 0, .28);
+        box-shadow: #00000044 4px 4px 10px;
+      }
 		</style>
 		<script>
       google.script.run
       .withSuccessHandler((e) => {
-        console.log("getURL success:", e);
+        console.log("getData success");
         var access_token;
         var player = {};
         var isPaused = false;
@@ -72,30 +81,23 @@
         var searchQuery;
         var availableDevice;
         var playerUpdate;
-        var clientID = '';
-        var auth_url = "https://accounts.spotify.com/authorize?client_id=" + clientID + "&redirect_uri=" + encodeURI(e + "?callback") + "&scope=user-read-private%20user-read-email%20user-modify-playback-state%20user-read-playback-state%20user-top-read%20user-read-recently-played&response_type=token";
-
-        var playlistIDs = ['5ogNqu3QZ2VYrMPmVOcFtw','7eB2erND497hJnkSbFiycp','41HMncEsmXdlfhIBruGU2l'];
+        var auth_url = "https://accounts.spotify.com/authorize?client_id=" + e.clientID + "&redirect_uri=" + encodeURI(e.execURL + "?callback") + "&scope=user-read-private%20user-read-email%20user-modify-playback-state%20user-read-playback-state%20user-top-read%20user-read-recently-played&response_type=code";
         var currentSongID;
         var previousSongID;
-        var numberSongsToPlay = 2;
         var uniqueSongCounter = 0;
         var playlistIndex;
         var isRotationEnabled = false;
         var nextTrigger = false;
 
-        playlistIndex = Math.floor(Math.random() * playlistIDs.length);
-        console.log("onload random playlistIndex: " + playlistIndex);
+        initialize();
 
-        if (!('localStorage' in window)) {
-          document.write("<p>Sorry, the page is designed only for modern browsers.</p>");
-        } else {
-          let expiration = localStorage.getItem("token_expiration");
-          if (expiration) {
-            if (+new Date(expiration) < +new Date()) {
-              document.getElementById("expiredLogin").setAttribute("href", auth_url);
-              document.getElementById("expired").classList.add("shown");
-            } else {
+        async function initialize() {
+          playlistIndex = Math.floor(Math.random() * e.playlistIDs.length);
+          console.log("Starting random playlistIndex: " + playlistIndex);
+          if (!('localStorage' in window)) {
+            document.write("<p>Sorry, the page is designed only for modern browsers.</p>");
+          } else {
+            if (localStorage.getItem('refresh_token')) {
               access_token = localStorage.getItem("access_token");
               document.getElementById("loggedIn").classList.add("shown");
               document.getElementById('signout').addEventListener('click', signOut);
@@ -116,7 +118,7 @@
                 if (!isRotationEnabled) {
                   console.log("Enabling playlist rotation");
                   isRotationEnabled = true;
-                  uniqueSongCounter = numberSongsToPlay;
+                  uniqueSongCounter = e.numberSongsToPlay;
                   nextTrigger = true;
                   rotatePlaylist();
                 } else {
@@ -125,182 +127,193 @@
                   uniqueSongCounter = 0;
                 }
               });
-
-              request("GET", 'me', function () {
-                if (this.readyState == XMLHttpRequest.DONE && this.status === 200) {
-                  let res = JSON.parse(this.response);
-                  document.getElementById("user").innerHTML = " as " + res.display_name + " (" + res.email + ")";
-                }
-              })
-
-
               updatePlayer();
               updateTimer();
               setInterval(updatePlayer, 1000);
               setInterval(updateTimer, 250);
+              let result = await request("GET", 'me')
+              document.getElementById("user").innerHTML = " as " + result.display_name + " (" + result.email + ")";
+            } else {
+              document.getElementById("newLogin").setAttribute("href", auth_url);
+              document.getElementById("notLoggedIn").classList.add("shown");
+              document.getElementById("loading").classList.add("hidden");
             }
-          } else {
-            document.getElementById("newLogin").setAttribute("href", auth_url);
-            document.getElementById("notLoggedIn").classList.add("shown");
           }
-          document.getElementById("loading").classList.add("hidden");
-        }
-        
+        } 
 
         function rotatePlaylist() {
-          if (isRotationEnabled && ++uniqueSongCounter > numberSongsToPlay) {
+          if (isRotationEnabled && ++uniqueSongCounter > e.numberSongsToPlay) {
             uniqueSongCounter = 0;
-            playlistIndex = (playlistIndex + 1) % playlistIDs.length;
+            playlistIndex = (playlistIndex + 1) % e.playlistIDs.length;
             playlistIndex = isNaN(parseFloat(playlistIndex)) ? 0 : playlistIndex;
-            let uri = 'spotify:playlist:' + playlistIDs[playlistIndex];
+            let uri = 'spotify:playlist:' + e.playlistIDs[playlistIndex];
             let data = { context_uri: uri, };
-            console.log("ROTATING. playlistIndex: " + playlistIndex + " playlistID: " + playlistIDs[playlistIndex] + " uri: " + uri);
+            console.log("ROTATING. playlistIndex: " + playlistIndex + " playlistID: " + e.playlistIDs[playlistIndex] + " uri: " + uri);
             controlPlayback('play', "PUT", '', data);
             return true;
           }
           return false;
         }
 
-        function request(method, path, callback, data) {
-          if (!checkSignIn()) {
-            if (!hasAlerted && !isLoggingOff) {
-              hasAlerted = true;
-              alert("Something went wrong with authorization.");
-              window.open(e,'_top');
-            }
-            return;
-          }
-          let xml = new XMLHttpRequest();
-          xml.open(method, 'https://api.spotify.com/v1/' + path);
-          xml.onreadystatechange = callback;
-          xml.setRequestHeader('Authorization', 'Bearer ' + access_token)
-          xml.send(data ? JSON.stringify(data) : undefined);
+        async function request(method, path, data) {
+          return new Promise(resolve => {
+            (async () => {
+              let xhr = new XMLHttpRequest();
+              xhr.open(method, 'https://api.spotify.com/v1/' + path);
+              xhr.onreadystatechange = function () {
+                if (this.readyState == XMLHttpRequest.DONE) {
+                  if (this.status === 200) {
+                    resolve(JSON.parse(this.response))
+                  } else {
+                    if(this.response) {
+                      resolve({ ...JSON.parse(this.response), ...{ status: this.status } })
+                    } else {
+                      resolve({ status: this.status })
+                    }
+                  }
+                };
+              }
+              xhr.setRequestHeader('Authorization', 'Bearer ' + await getAccessToken())
+              xhr.send(data ? JSON.stringify(data) : undefined);
+            })()
+          })
         }
 
-        function loadFavourites() {
+        async function getAccessToken() {
+          return new Promise(resolve => {
+            let expiration = localStorage.getItem("token_expiration");
+            if (expiration && (new Date(expiration) > new Date())) {
+              // we don't need a new access token
+              resolve(localStorage.getItem('access_token'))
+            } else {
+              var xhr = new XMLHttpRequest();
+              var data = "grant_type=refresh_token&refresh_token=" + localStorage.getItem('refresh_token');
+              xhr.addEventListener("readystatechange", function () {
+                if (this.readyState == XMLHttpRequest.DONE && this.status === 200) {
+                  let res = JSON.parse(this.response)
+                  if (res.access_token) {
+                    access_token = res.access_token
+                    localStorage.setItem("access_token", access_token);
+                    localStorage.setItem("token_expiration", "" + new Date(+new Date() + (+res.expires_in) * 1000));
+                    resolve(access_token)
+                  } else {
+                    writeError();
+                  }
+                }
+              });
+              xhr.open("POST", "https://accounts.spotify.com/api/token");
+              xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+              xhr.setRequestHeader("Authorization", "Basic " + btoa(e.clientID + ':' + e.clientSecret))
+              xhr.send(data);
+            }
+          })
+        }
+
+        async function loadFavourites() {
           if (document.getElementById("loadFavourites").innerHTML != 'Load favorites list') {
             document.getElementById("artists").innerHTML = '';
             document.getElementById("tracks").innerHTML = '';
             document.getElementById("loadFavourites").innerHTML = 'Load favorites list';
             return;
           }
-          request('GET', 'me/top/artists?time_range=short_term', function () {
-            if (this.readyState == XMLHttpRequest.DONE && this.status === 200) {
-              document.getElementById("artists").innerHTML = '';
-              document.getElementById("tracks").innerHTML = '';
-                result = JSON.parse(this.response);
-              if (!result || !('items' in result)) {
-                document.getElementById("artists").innerHTML = '<b>Something went wrong.</b>';
-              } else {
-                let items = result.items;
-                let html = '<h1>Most listened to artists (last 4 weeks)</h1>';
-                for (let i = 0; i < items.length; i++) {
-                  const el = items[i];
-                  html += '<li>' + el.name + '</li>'
-                }
-                document.getElementById("artists").innerHTML = html;
-                document.getElementById("loadFavourites").innerHTML = 'Clear favorites list';
-              }
-            }
-          });
 
-          request('GET', 'me/top/tracks?time_range=short_term', function () {
-            if (this.readyState == XMLHttpRequest.DONE && this.status === 200) {
-              result = JSON.parse(this.response);
-              if (!result || !('items' in result)) {
-                alert("Something went wrong.");
-              } else {
-                let items = result.items;
-                let html = '<h1>Most listened to songs (last 4 weeks)</h1>';
-                for (let i = 0; i < items.length; i++) {
-                  const el = items[i];
-                  html += '<li>' + el.artists[0].name + " - " + el.name + '</li>'
-                }
-                document.getElementById("tracks").innerHTML = html;
-              }
+          let result_artists = await request('GET', 'me/top/artists?time_range=short_term')
+          document.getElementById("artists").innerHTML = '';
+          document.getElementById("tracks").innerHTML = '';
+          if (!result_artists || !('items' in result_artists)) {
+            document.getElementById("artists").innerHTML = '<b>Something went wrong.</b>';
+          } else {
+            let items = result_artists.items;
+            let html = '<h1>Most listened to artists (last 4 weeks)</h1>';
+            for (let i = 0; i < items.length; i++) {
+              const el = items[i];
+              html += '<li>' + el.name + '</li>'
             }
-          });
+            document.getElementById("artists").innerHTML = html;
+            document.getElementById("loadFavourites").innerHTML = 'Clear favorites list';
+          }
+
+          let result_tracks = await request('GET', 'me/top/tracks?time_range=short_term')
+          if (!result_tracks || !('items' in result_tracks)) {
+            alert("Something went wrong!");
+          } else {
+            let items = result_tracks.items;
+            let html = '<h1>Most listened to artists (last 4 weeks)</h1>';
+            for (let i = 0; i < items.length; i++) {
+              const el = items[i];
+              html += '<li>' + el.artists[0].name + " - " + el.name + '</li>'
+            }
+            document.getElementById("tracks").innerHTML = html;
+          }
         }
 
         function signOut() {
           localStorage.removeItem('token_expiration');
           localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
           isLoggingOff = true;
-          window.open(e,'_top');
+          window.open(e.execURL,'_top');
         }
 
-
-        function controlPlayback(action, method, params, data) {
-          request(method || 'PUT', 'me/player/' + action + (params || ""), function () {
-            if (this.readyState == XMLHttpRequest.DONE && this.status === 200) {
-              let result = JSON.parse(this.response);
-              updatePlayer();
+        async function controlPlayback(action, method, params, data) {
+          let result = await request(method || 'PUT', 'me/player/' + action + (params || ""), data || {})
+          if (result.status === 200) {
+            if (updatePlayer) updatePlayer();
+          } else if (result.status === 404) {
+            if ((JSON.parse(this.response || {}).error || {}).reason == 'NO_ACTIVE_DEVICE') {
+              alert('No device available!')
             }
-          }, data || {})
+          }
         }
 
-        function checkSignIn() {
-          let expiration = localStorage.getItem("token_expiration");
-          if (expiration && (+new Date(expiration) > +new Date())) {
-            return true;
-          } else return false;
-        }
+        async function updatePlayer() {
+          let result = await request("GET", "me/player")
+          player.isPaused = false;
+          let playerEl = document.getElementById("playerData");
+          if (result.status && player.status !== 200) {
+            playerEl.innerHTML = "<b>Nothing playing at the moment.</b>";
+            document.getElementById("playback").classList.remove("shown");
+            checkDevices();
+          } else {
+            if (!result) return;
+            player = result;
+            playerUpdate = +new Date();
 
-        function updatePlayer() {
-          request("GET", "me/player", function () {
-            if (this.readyState == XMLHttpRequest.DONE) {
-              player.isPaused = false;
-              let playerEl = document.getElementById("playerData");
-              if (this.status === 200) {
-                if (!this.response) return;
-                let res = JSON.parse(this.response);
-                if (!res) return;
-                player = res;
-                playerUpdate = +new Date();
-
-                let html = "<b>Now playing:</b> ";
-                html += player.item.artists[0].name + " - " + player.item.name;
-
-                currentSongID =  player.item.id;
-                if (nextTrigger) {
-                  nextTrigger = false;
-                  previousSongID = currentSongID;
-                  uniqueSongCounter = 0;
-                  console.log("nextTrigger detected");
-                } else if (currentSongID != previousSongID) {
-                  console.log("New song detected");
-                  previousSongID = currentSongID;
-                  rotatePlaylist();
-                }
-
-                document.getElementById("pauseplay").innerHTML = player.is_playing ? "Pause" : "Play";
-                playerEl.innerHTML = html;
-                document.getElementById("rotation").innerHTML = 'Set rotation ' + (isRotationEnabled ? 'off' : 'on');
-                updateTimer();
-                document.getElementById("playback").classList.add("shown");
-                document.getElementById("lastPlayer").classList.remove("shown");
-              } else {
-                playerEl.innerHTML = "<b>Nothing playing at the moment.</b>";
-                document.getElementById("playback").classList.remove("shown");
-                checkDevices();
-              }
+            let html = "<b>Now playing:</b> ";
+            if (player.item) {
+              html += player.item.artists[0].name + " - " + player.item.name;
             }
-          })
+
+            currentSongID =  player.item.id;
+            if (nextTrigger) {
+              nextTrigger = false;
+              previousSongID = currentSongID;
+              uniqueSongCounter = 0;
+              console.log("nextTrigger detected");
+            } else if (currentSongID != previousSongID) {
+              console.log("New song detected");
+              previousSongID = currentSongID;
+              rotatePlaylist();
+            }
+
+            document.getElementById("pauseplay").innerHTML = player.is_playing ? "Pause" : "Play";
+            playerEl.innerHTML = html;
+            document.getElementById("rotation").innerHTML = isRotationEnabled ? 'Disable Playlist Rotation' : 'Enable Playlist Rotation';
+            updateTimer();
+            document.getElementById("playback").classList.add("shown");
+            document.getElementById("lastPlayer").classList.remove("shown");
+          }
         }
 
-        function checkDevices() {
-          request("GET", "me/player/devices", function () {
-            if (this.readyState == XMLHttpRequest.DONE) {
-              availableDevice = null;
-              res = JSON.parse(this.response);
-              if (res.devices.length > 0) {
-                availableDevice = res.devices[0];
-                document.getElementById("lastPlayer").classList.add("shown");
-              } else {
-                document.getElementById("lastPlayer").classList.remove("shown");
-              }
-            }
-          });
+        async function checkDevices() {
+          let result = await request("GET", "me/player/devices")
+          availableDevice = null;
+          if (result.devices.length > 0) {
+            availableDevice = result.devices[0];
+            document.getElementById("lastPlayer").classList.add("shown");
+          } else {
+            document.getElementById("lastPlayer").classList.remove("shown");
+          }
         }
 
         function updateTimer() {
@@ -337,67 +350,63 @@
 
         function search() {
           document.getElementById("searchResults").innerHTML = '';
-          setTimeout(function () {
+          setTimeout(async function () {
             searchQuery = '';
-            searchQuery = prompt("Search");
+            searchQuery = prompt("Zoekopdracht");
             if (!searchQuery || !searchQuery.length) return;
-            request('GET', 'search?type=track,album,artist&market=nl&q=' + searchQuery, function () {
-              if (this.readyState == XMLHttpRequest.DONE && this.status === 200) {
-                let res = JSON.parse(this.response);
-                let albums = res.albums.items;
-                let artists = res.artists.items;
-                let tracks = res.tracks.items;
+            let result = await request('GET', 'search?type=track,album,artist&market=nl&q=' + searchQuery)
+            let albums = result.albums.items;
+            let artists = result.artists.items;
+            let tracks = result.tracks.items;
 
-                let html = '<br><b>Searched for: </b>' + searchQuery + '<br><button id="clearSearch">Clear search</button><br><br><br>';
+            let html = '<br><b>Searched for: </b>' + searchQuery + '<br><button id="clearSearch">Clear search</button><br><br><br>';
 
-                if (artists.length) {
-                  html += '<b>Found Artists</b><ul>';
-                  for (let i = 0; i < artists.length && i < 3; i++) {
-                    html += '<li>' + artists[i].name + "&nbsp;&nbsp;&nbsp;<button class='playURI' URI=" + artists[i].uri + ">Play</button></li>";
-                  }
-                  html += '</ul>';
-                }
-
-                if (tracks.length) {
-                  html += '<b>Found Songs</b><ul>';
-                  for (let i = 0; i < tracks.length && i < 12; i++) {
-                    html += '<li>' + tracks[i].artists[0].name + " - " + tracks[i].name + "&nbsp;&nbsp;&nbsp;<button class='playURI' URI=" + tracks[i].uri + ">Play</button></li>";
-                  }
-                  html += '</ul>';
-                }
-
-                if (albums.length) {
-                  html += '<b>Found Albums</b><ul>';
-                  for (let i = 0; i < albums.length && i < 3; i++) {
-                    html += '<li>' + albums[i].artists[0].name + " - " + albums[i].name + "&nbsp;&nbsp;&nbsp;<button class='playURI' URI=" + albums[i].uri + ">Play</button></li>";
-                  }
-                  html += '</ul>';
-                }
-
-                document.getElementById("searchResults").innerHTML = html;
-                document.getElementById("clearSearch").addEventListener("click", function () {
-                  document.getElementById("searchResults").innerHTML = '';
-                });
-
-                let btns = document.getElementsByClassName("playURI");
-                for (let i = 0; i < btns.length; i++) {
-                  const btn = btns[i];
-                  btn.addEventListener('click', function () {
-                    let uri = this.attributes.uri.value;
-
-                    let data = uri.startsWith("spotify:track") ? { uris: [uri], } : { context_uri: uri, };
-                    controlPlayback('play', "PUT", '', data);
-                  })
-                }
+            if (artists.length) {
+              html += '<b>Found Artists</b><ul>';
+              for (let i = 0; i < artists.length && i < 3; i++) {
+                html += '<li>' + artists[i].name + "&nbsp;&nbsp;&nbsp;<button class='playURI' URI=" + artists[i].uri + ">Play</button></li>";
               }
+              html += '</ul>';
+            }
+
+            if (tracks.length) {
+              html += '<b>Found Songs</b><ul>';
+              for (let i = 0; i < tracks.length && i < 12; i++) {
+                html += '<li>' + tracks[i].artists[0].name + " - " + tracks[i].name + "&nbsp;&nbsp;&nbsp;<button class='playURI' URI=" + tracks[i].uri + ">Play</button></li>";
+              }
+              html += '</ul>';
+            }
+
+            if (albums.length) {
+              html += '<b>Found Albums</b><ul>';
+              for (let i = 0; i < albums.length && i < 3; i++) {
+                html += '<li>' + albums[i].artists[0].name + " - " + albums[i].name + "&nbsp;&nbsp;&nbsp;<button class='playURI' URI=" + albums[i].uri + ">Play</button></li>";
+              }
+              html += '</ul>';
+            }
+
+            document.getElementById("searchResults").innerHTML = html;
+            document.getElementById("clearSearch").addEventListener("click", function () {
+              document.getElementById("searchResults").innerHTML = '';
             });
+
+            let btns = document.getElementsByClassName("playURI");
+            for (let i = 0; i < btns.length; i++) {
+              const btn = btns[i];
+              btn.addEventListener('click', function () {
+                let uri = this.attributes.uri.value;
+
+                let data = uri.startsWith("spotify:track") ? { uris: [uri], } : { context_uri: uri, };
+                controlPlayback('play', "PUT", '', data);
+              })
+            }
           }, 50);
         }
       })
       .withFailureHandler((e) => {
-        console.log("getURL failure:", e);
+        console.log("getData failure:", e);
       })
-      .getURL();
+      .getData();
 		</script>
 	</head>
 	<body>
@@ -428,15 +437,15 @@
 					<button id='lastPlayer'>Continue playing</button>
 				</div>
 				<div class="container shaded-container">
-					<button id='search'>Search</button>
-					<br>
-					<div id="searchResults"></div>
-				</div>
-				<div class="container shaded-container">
 					<button id='loadFavourites'>Load favorites list</button>
 					<ol id='artists'></ol>
 					<br>
 					<ol id='tracks'></ol>
+				</div>
+        <div class="container shaded-container">
+					<button id='search'>Search</button>
+					<br>
+					<div id="searchResults"></div>
 				</div>
 			</div>
 		</div>

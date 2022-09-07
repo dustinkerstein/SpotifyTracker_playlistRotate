@@ -5,7 +5,7 @@
 1. Create a new [Google Apps Script project](https://script.google.com/home/projects/create) and give it a friendly name
 1. From this GitHub Repo, paste the code found in  `code.gs` into already created `code.gs` file in the Google Apps Script project
 1. On the top left, create two HTML files: `index` and `callback` and paste in their respective code from this Repo
-1. Configure `playlistIDs` and `clientID` variables in `index.html` - Note playlist IDs can be found in the desktop web Spotify app by clicking on a playlist and copying the ID from the URL. `clientID` can be found in the Spotify Developer Dashboard for your new app
+1. Configure `numberSongsToPlay`, `playlistIDs`, `clientID`, and `clientSecret` variables in `code.gs` - Note playlist IDs can be found in the desktop web Spotify app by clicking on a playlist and copying the ID from the URL. `clientID` and `clientSecret` can be found in the Spotify Developer Dashboard for your new app
 1. Hit the `Deploy` button and select `New Deployment` and then hit the gear icon and select `Web app`. Leave everything else at the default and hit `Deploy`
 1. Again hit the `Deploy` button but this time select `Test deployments`. Copy that url and paste it into the `url` parameter in the `code.gs` file
 1. Back in the Spotify Developer Dashboard, edit Spotify app and use the dev url as your Redirect URI, but add `?callback` to the end of the url, ie. `https://script.google.com/macros/s/AKfycbyrkbmXjuR3LPoHfbGFF7hZqEyMyUMpgd0kY7tOViFQ/dev?callback`

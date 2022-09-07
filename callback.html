@@ -21,35 +21,48 @@
 	</style>
 	<script>	
     google.script.url.getLocation(function(location) {
-      console.log(location);
-      console.log(location.parameters);
-      console.log(location.hash);
-			at = (location.hash.split("access_token=")[1]||"").split("&")[0];
-			ei = (location.hash.split("expires_in=")[1]||"").split("&")[0];
-			if (at && ei){
-				if ('localStorage' in window){
-					localStorage.setItem("token_expiration", "" + new Date(+new Date() + (+ei)*1000));
-					localStorage.setItem("access_token", at);
-          google.script.run
-          .withSuccessHandler((e) => {
-            console.log("getURL success:", e);
-            window.open(e,'_top');
-          })
-          .withFailureHandler((e) => {
-            console.log("getURL failure:", e);
-          })
-          .getURL();
-				} else{
-					erreur();
-				}
-			} else{
-				erreur();
-			}
+      const auth_code = location.parameter.code;
+      google.script.run
+      .withSuccessHandler((e) => {
+        console.log("getData success");
+        if (auth_code) {
+          if ('localStorage' in window && 'fetch' in window) {
+            var xhr = new XMLHttpRequest();
+            var data = "grant_type=authorization_code&code=" + auth_code + "&redirect_uri=" + encodeURI(e.execURL + "?callback");
+            xhr.addEventListener("readystatechange", function () {
+              if (this.readyState == XMLHttpRequest.DONE && this.status === 200) {
+                let res = JSON.parse(this.response)
+                if (res.access_token) {
+                  access_token = res.access_token
+                  localStorage.setItem("access_token", access_token);
+                  localStorage.setItem("refresh_token", res.refresh_token);
+                  localStorage.setItem("token_expiration", "" + new Date(+new Date() + 0 + (+res.expires_in) * 1000))
+                  window.open(e.execURL,'_top');
+                } else {
+                  writeError();
+                }
+              }
+            });
+            xhr.open("POST", "https://accounts.spotify.com/api/token");
+            xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+            xhr.setRequestHeader("Authorization", "Basic " + btoa(e.clientID + ':' + e.clientSecret))
+            xhr.send(data);
+          } else {
+            writeError();
+          }
+        } else {
+          writeError();
+        }
+      })
+      .withFailureHandler((e) => {
+        console.log("getData failure:", e);
+      })
+      .getData();
     });
 
-		function erreur(){
+    function writeError() {
 			document.write("Something went wrong. <a href='../SpotifyTracker/'>Go home</a>");
-		}
+    }
 	</script>
 </head>
 <body>
