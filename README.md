@@ -12,7 +12,6 @@
 1. Open a new browser tab and paste in the dev url (without `?callback`). You should be able to log in and control an existing Spotify device (ie. web player or iOS app)
 
 # To Do
-1. OAuth timeout at 60 minutes. Would need to get renewal token. Might ping upstream maintainer about this.
 1. Due to current polling design / timing, there is brief playback of the next song before switching playlists. Could possibly use progress updates and set volume immediately before / after song change.
 
 # Known Issues
