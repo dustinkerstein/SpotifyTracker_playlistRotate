@@ -12,6 +12,7 @@
 1. Open a new browser tab and paste in the dev url (without `?callback`). You should be able to log in and control an existing Spotify device (ie. web player or iOS app)
 
 # Known Issues
+- Due to the relatively naive implementation of the playlist rotation logic, it currently requires shuffle to be enabled. Otherwise the playlists will always start with the first song in the playlist.
 - [Sonos playback broken](https://community.spotify.com/t5/Spotify-for-Developers/Sonos-speakers-not-showing-in-GET-player-devices/td-p/5175462)
 - There might be some funky behavior when using multiple remotes and hitting next / previous. Needs to be investigated at some point. 
 - Related to the above, there's some business logic to define for how to handle next / previous clicks. Ie. should they stay within the current playlist, or should next (likely not previous) count towards the "uniqueSongCounter"? Currently, if you use the next / previous buttons in the custom app, it won't count those, but external next / previous events (ie. from your phone) do count towards "uniqueSongCounter".
